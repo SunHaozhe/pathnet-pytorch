@@ -11,7 +11,7 @@ class Genotype():
         self.N = N
 
     def apply_mutation(self, i, j):
-        gene = self.genotype[i][j] + random.randint(-2, 2) % self.M
+        gene = (self.genotype[i][j] + random.randint(-2, 2)) % self.M
         # (chongyi zheng): using mod
         # if gene < 0:
         #     gene += self.M
