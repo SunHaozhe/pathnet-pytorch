@@ -60,7 +60,7 @@ class Net(nn.Module):
         params_set = [self.fc1, self.fc2, self.fc3]
         for path, params in zip(best_path, params_set):
             for i, param in enumerate(params):
-                if  i in path:
+                if i in path:
                     param.requires_grad = False
                 else:
                     p = {'params': param.parameters()}
@@ -135,7 +135,7 @@ class Net(nn.Module):
             data, target = Variable(data), Variable(target)
             self.optimizer.zero_grad()
             output = self(data, path, last)
-            pred = output.data.max(1)[1] # get the index of the max log-probability
+            pred = output.data.max(1)[1]  # get the index of the max log-probability
             fitness += pred.eq(target.data).cpu().sum()
             train_len += len(target.data)
             if batch_idx > 1000:
