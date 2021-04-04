@@ -1,6 +1,7 @@
 import numpy as np
 import random
-import cPickle as pickle
+# import cPickle as pickle
+import pickle
 
 import torch
 import torch.utils.data as data_utils

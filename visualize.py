@@ -72,16 +72,20 @@ class GraphVisualize():
                     if (not f_1 == None) and (not f_2 == None):
                         self.graph.add_edge(f_1, f_2, color = self.fixed_color, weight = self.fixed_weight)
 
-        nodes = self.graph.nodes(data = True)
+        nodes = self.graph.nodes(data=True)
+        nodelist = list(dict(nodes).keys())
         node_color = 'g'
         node_size = [node[1]['size'] for node in nodes]
         node_shape = 's'
 
         edges = self.graph.edges()
+        edgelist = list(dict(edges).keys())
         edge_color = [self.graph[u][v]['color'] for u,v in edges]
         weights = [self.graph[u][v]['weight'] for u,v in edges]
-        nx.draw_networkx_nodes(self.graph, nodes = nodes, pos=nx.get_node_attributes(self.graph,'Position'), node_color = node_color, node_size = node_size, node_shape = node_shape)
-        nx.draw_networkx_edges(self.graph, edges = edges, pos=nx.get_node_attributes(self.graph,'Position'), edge_color = edge_color, width = weights)
+        nx.draw_networkx_nodes(self.graph, nodelist=nodelist, pos=nx.get_node_attributes(self.graph, 'Position'),
+                               node_color=node_color, node_size=node_size, node_shape=node_shape)
+        nx.draw_networkx_edges(self.graph, edgelist=edgelist, pos=nx.get_node_attributes(self.graph, 'Position'),
+                               edge_color=edge_color, width=weights)
 
     def show(self, genes, color):
         if self.vis:
@@ -92,9 +96,9 @@ class GraphVisualize():
             self.reset()
 
     def node_upsize(self, node_id):
-        size = self.graph.node[node_id]['size']
+        size = self.graph.nodes[node_id]['size']
         size += self.node_size_add
-        self.graph.node[node_id]['size'] = size
+        self.graph.nodes[node_id]['size'] = size
 
     def reset(self):
         nodes = self.graph.nodes(data = True)

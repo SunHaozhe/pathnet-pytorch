@@ -129,7 +129,7 @@ def main():
             os.system('./get_mnist_data.sh')
 
         if os.path.exists('./result/result_mnist.pickle'):
-            f = open('./result/result_mnist.pickle','r')
+            f = open('./result/result_mnist.pickle', 'rb')
             result = pickle.load(f)
             f.close()
         else:
@@ -248,9 +248,9 @@ def main():
                     result.append(('pathnet_svhn_first', args.threshold, first_fitness, second_fitness))
 
         if not args.cifar_svhn:
-            f = open('./result/result_mnist.pickle', 'w')
+            f = open('./result/result_mnist.pickle', 'wb')
         else:
-            f = open('./result/result_cifar_svhn.pickle', 'w')
+            f = open('./result/result_cifar_svhn.pickle', 'wb')
         pickle.dump(result, f)
         f.close()
 
