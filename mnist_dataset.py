@@ -17,23 +17,24 @@ class Dataset():
 
         mnist_train_images, mnist_train_labels = mndata.load_training()
 
-        mnist_train_images = np.asarray(mnist_train_images)
+        # TODO (chongyi zheng): convert to unit8 type
+        mnist_train_images = np.asarray(mnist_train_images, dtype=np.uint8)
         mnist_train_images = normalize(mnist_train_images)
-        mnist_train_labels = np.asarray(mnist_train_labels)
+        mnist_train_labels = np.asarray(mnist_train_labels, dtype=np.uint8)
 
         """divide datset by label"""
         print("Dividing dataset...")
         sorted_train_images = []
-        sorted_train_labels = []        
+        sorted_train_labels = []
 
-        for label in range(0,10):
+        for label in range(0, 10):
             train_index = np.where(mnist_train_labels == label)
             sorted_train_images.append(mnist_train_images[train_index[0]])
             sorted_train_labels.append(np.asarray([label] * len(train_index[0])))
-            
+
         """add salt_and_pepper noise"""
         print("Adding salt and pepper noise...")
-        shape = 28 * 28 ##image shape of mnist
+        shape = 28 * 28  # image shape of mnist
         self.train_images = []
         self.train_labels = sorted_train_labels
         for images in sorted_train_images:
@@ -61,5 +62,5 @@ class Dataset():
         tensor_target = torch.from_numpy(target)
 
         train = data_utils.TensorDataset(tensor_data, tensor_target)
-        train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle = True)
+        train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True)
         return train_loader
