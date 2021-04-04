@@ -28,8 +28,8 @@ class Net(nn.Module):
         self.fc2 = []
         self.fc3 = []
 
-        for i in range(module_num[0]):
-            if not i in best_path[0]:
+        for i in range(module_num[0]):  # M
+            if not i in best_path[0]:  # M
                 """All parameters should be declared as member variable, so I think this is the simplest way to do so"""
                 if not self.args.cifar_svhn:
                     exec("self.m1" + str(i) + " = nn.Linear(28*28," + str(neuron_num) + ")")
@@ -60,7 +60,7 @@ class Net(nn.Module):
         params_set = [self.fc1, self.fc2, self.fc3]
         for path, params in zip(best_path, params_set):
             for i, param in enumerate(params):
-                if  i in path:
+                if i in path:
                     param.requires_grad = False
                 else:
                     p = {'params': param.parameters()}
