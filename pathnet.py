@@ -75,24 +75,24 @@ class Net(nn.Module):
 
     def forward(self, x, path, last):
         if not self.args.cifar_svhn:
-            x = x.view(-1, 28*28)
+            x = x.view(-1, 28 * 28)
         else:
-            x = x.view(-1, 32*32*3)
+            x = x.view(-1, 32 * 32 * 3)
         
-        M = self.args.M
+        # M = self.args.M  # (chongyi zheng): comment out redundant code
         #for i in range(self.args.L):
         y = F.relu(self.fc1[path[0][0]](x))
-        for j in range(1,self.args.N):
+        for j in range(1, self.args.N):
             y += F.relu(self.fc1[path[0][j]](x))
         x = y
 
         y = F.relu(self.fc2[path[1][0]](x))
-        for j in range(1,self.args.N):
+        for j in range(1, self.args.N):
             y += F.relu(self.fc2[path[1][j]](x))
         x = y
 
         y = F.relu(self.fc3[path[2][0]](x))
-        for j in range(1,self.args.N):
+        for j in range(1, self.args.N):
             y += F.relu(self.fc3[path[2][j]](x))
         x = y
 
@@ -113,14 +113,14 @@ class Net(nn.Module):
                 data, target = data.cuda(), target.cuda()
             data, target = Variable(data), Variable(target)
             self.optimizer.zero_grad()
-            output = self(data, path, -1)
-            pred = output.data.max(1)[1] # get the index of the max log-probability
-            fitness += pred.eq(target.data).cpu().sum()
-            train_len += len(target.data)
+            output = self.forward(data, path, -1)  # (chongyi zheng): update from '_call_impl' to 'forward' method
+            pred = output.max(dim=1)[1]  # get the index of the max log-probability
+            fitness += pred.eq(target).cpu().sum()
+            train_len += len(target)
             loss = F.cross_entropy(output, target)
             loss.backward()
             self.optimizer.step()
-            if not batch_idx < num_batch -1:
+            if not batch_idx < num_batch - 1:
                 break
         fitness = fitness / train_len
         return fitness

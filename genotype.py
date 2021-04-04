@@ -5,17 +5,18 @@ import copy
 class Genotype():
 
     def __init__(self, L, M, N):
-        self.genotype = np.random.randint(0, M, (L,N))
+        self.genotype = np.random.randint(0, M, (L, N))
         self.L = L
         self.M = M
         self.N = N
 
     def apply_mutation(self, i, j):
-        gene = self.genotype[i][j] + random.randint(-2, 2)
-        if gene < 0:
-            gene += self.M
-        elif gene > self.M - 1:
-            gene -= self.M
+        gene = self.genotype[i][j] + random.randint(-2, 2) % self.M
+        # (chongyi zheng): using mod
+        # if gene < 0:
+        #     gene += self.M
+        # elif gene > self.M - 1:
+        #     gene -= self.M
         self.genotype[i][j] = gene
 
     def mutate(self):
@@ -37,7 +38,7 @@ class Genetic():
         """L: layers, M: units in each layer, N: number of active units, pop: number of gene"""
         self.genotypes = [Genotype(L, M, N) for _ in range(pop)]
         self.pop = pop
-        self.control_fixed = random.sample(self.genotypes,1)[0]
+        self.control_fixed = random.sample(self.genotypes, 1)[0]
 
     def return_all_genotypes(self):
         genotypes = [gene.return_genotype() for gene in self.genotypes]

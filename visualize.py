@@ -28,7 +28,7 @@ class GraphVisualize():
 
         for layer_num, one_layer in enumerate(modules):
             for module_num in range(one_layer):
-                self.graph.add_node(node_num, Position=(10 * layer_num, 10 * module_num), size = self.init_node_size)
+                self.graph.add_node(node_num, position=(10 * layer_num, 10 * module_num), size=self.init_node_size)
                 self.node_ids[(layer_num, module_num)] = node_num
                 node_num += 1
 
@@ -43,34 +43,33 @@ class GraphVisualize():
                 layer_path.append(self.node_ids[(layer_num, num)])
             self.fixed_path.append(layer_path)
 
-
     def get_fig(self, genes, e_color):
-
-        fixed_pair = [(self.fixed_path[i], self.fixed_path[i+1]) 
+        fixed_pair = [(self.fixed_path[i], self.fixed_path[i + 1])
                       for i in range(len(self.fixed_path) - 1)]
 
         for gene in genes:
-            gene_pair = [(gene[i], gene[i+1]) for i in range(len(gene) - 1)]
+            gene_pair = [(gene[i], gene[i + 1]) for i in range(len(gene) - 1)]
 
             for layer_num, (pair, fixed) in enumerate(zip(gene_pair, fixed_pair)):
                 for first_num in pair[0]:
                     for second_num in pair[1]:
                         first_node = self.node_ids[(layer_num, first_num)]
                         second_node = self.node_ids[(layer_num + 1, second_num)]
-                        if self.graph.has_edge(first_node, second_node):
+                        if self.graph.has_edge(first_node, second_node):  # update node size and edge width
                             self.node_upsize(first_node)
                             self.node_upsize(second_node)
-                            weight =  self.graph.get_edge_data(first_node, second_node)['weight']
+                            weight = self.graph.get_edge_data(first_node, second_node)['weight']
                             weight += self.edge_weight_add
-                            self.graph.add_edge(first_node, second_node, color = e_color, weight = weight)
-                        else:
-                            self.graph.add_edge(first_node, second_node, color = e_color, weight = self.init_edge_weight)
+                            self.graph.add_edge(first_node, second_node, color=e_color, weight=weight)
+                        else:  # initialize edge
+                            self.graph.add_edge(first_node, second_node, color=e_color, weight=self.init_edge_weight)
                         
         for fixed in fixed_pair:
             for f_1 in fixed[0]:
                 for f_2 in fixed[1]:
-                    if (not f_1 == None) and (not f_2 == None):
-                        self.graph.add_edge(f_1, f_2, color = self.fixed_color, weight = self.fixed_weight)
+                    # (chongyi zheng): update syntax
+                    if f_1 is not None and f_2 is not None:
+                        self.graph.add_edge(f_1, f_2, color=self.fixed_color, weight=self.fixed_weight)
 
         nodes = self.graph.nodes(data=True)
         nodelist = list(dict(nodes).keys())
@@ -80,11 +79,11 @@ class GraphVisualize():
 
         edges = self.graph.edges()
         edgelist = list(dict(edges).keys())
-        edge_color = [self.graph[u][v]['color'] for u,v in edges]
-        weights = [self.graph[u][v]['weight'] for u,v in edges]
-        nx.draw_networkx_nodes(self.graph, nodelist=nodelist, pos=nx.get_node_attributes(self.graph, 'Position'),
+        edge_color = [self.graph[u][v]['color'] for u, v in edges]
+        weights = [self.graph[u][v]['weight'] for u, v in edges]
+        nx.draw_networkx_nodes(self.graph, nodelist=nodelist, pos=nx.get_node_attributes(self.graph, 'position'),
                                node_color=node_color, node_size=node_size, node_shape=node_shape)
-        nx.draw_networkx_edges(self.graph, edgelist=edgelist, pos=nx.get_node_attributes(self.graph, 'Position'),
+        nx.draw_networkx_edges(self.graph, edgelist=edgelist, pos=nx.get_node_attributes(self.graph, 'position'),
                                edge_color=edge_color, width=weights)
 
     def show(self, genes, color):

@@ -71,6 +71,7 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
+
 def cifar_svhn_data(cifar):
     if cifar:
         print("Extracting cifar dataset...")
@@ -86,7 +87,7 @@ def cifar_svhn_data(cifar):
 def train_pathnet(model, gene, visualizer, train_loader, best_fitness, best_path, gen, vis_color):
     pathways = gene.sample()
     fitnesses = []
-    train_data = [(data, target) for (data,target) in train_loader]
+    train_data = [(data, target) for (data, target) in train_loader]
     for pathway in pathways:
         path = pathway.return_genotype()
         fitness = model.train_model(train_data, path, args.num_batch)
@@ -100,6 +101,7 @@ def train_pathnet(model, gene, visualizer, train_loader, best_fitness, best_path
         best_fitness = max(fitnesses)
         best_path = pathways[fitnesses.index(max(fitnesses))].return_genotype()
     return best_fitness, best_path, max(fitnesses)
+
 
 def train_control(model, gene, visualizer, train_loader, gen):        
     path = gene.return_control_genotype()
@@ -149,7 +151,7 @@ def main():
             os.system('./get_cifar10_data.sh')
         
         if os.path.exists('./result/result_cifar_svhn.pickle'):
-            f = open('./result/result_cifar_svhn.pickle','r')
+            f = open('./result/result_cifar_svhn.pickle', 'rb')
             result = pickle.load(f)
             f.close()
         else:
@@ -166,10 +168,11 @@ def main():
     first_fitness = []
     for gen in range(args.generation_limit):
         if not args.control:
-            best_fitness, best_path, max_fitness = train_pathnet(model, gene, visualizer, train_loader, best_fitness, best_path, gen, 'm')
+            best_fitness, best_path, max_fitness = train_pathnet(
+                model, gene, visualizer, train_loader, best_fitness, best_path, gen, 'm')
             first_fitness.append(max_fitness)
 
-        else: ##control experiment
+        else:  # control experiment
             fitness = train_control(model, gene, visualizer, train_loader, gen)
             first_fitness.append(fitness)
 
