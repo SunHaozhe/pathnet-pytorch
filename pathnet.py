@@ -117,6 +117,8 @@ class Net(nn.Module):
             pred = output.max(dim=1)[1]  # get the index of the max log-probability
             fitness += pred.eq(target).cpu().sum()
             train_len += len(target)
+            # output: <class 'torch.Tensor'> torch.Size([16, 2]) torch.float32
+            # <class 'torch.Tensor'> torch.Size([16]) torch.int64
             loss = F.cross_entropy(output, target)
             loss.backward()
             self.optimizer.step()

@@ -35,7 +35,7 @@ class Dataset():
         data = np.asarray(data)
         tensor_data = torch.from_numpy(data)
         tensor_data = tensor_data.float()
-        tensor_target = torch.from_numpy(target)
+        tensor_target = torch.from_numpy(target.astype(np.int64))
 
         loader = data_utils.TensorDataset(tensor_data, tensor_target)
         loader_dataset = data_utils.DataLoader(loader, batch_size=batch_size, shuffle = True)

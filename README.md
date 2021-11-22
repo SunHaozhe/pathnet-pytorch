@@ -6,18 +6,18 @@ Currently implemented binary MNIST task and CIFAR & cropped SVHN classification 
 
 ## Requirements
 
-- Python 2.7
+- Python 3.8
 - [numpy](http://www.numpy.org/)
 - [matplotlib](http://matplotlib.org/)
 - [networkx](https://networkx.github.io/)
 - [python-mnist](https://pypi.python.org/pypi/python-mnist/)
-- [pytorch](http://pytorch.org/)
+- [pytorch](http://pytorch.org/) 1.8.1
 
 ## Usage
 Install prerequisites:
 
 	$ apt-get install python-numpy python-matplotlib
-
+	
 	$ pip install python-mnist networkx
 
 And install pytorch: See http://pytorch.org/.

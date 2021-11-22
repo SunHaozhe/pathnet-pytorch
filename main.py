@@ -26,46 +26,53 @@ parser.add_argument('--N', type=int, default=3, metavar='N',
                     help='number of active units')
 parser.add_argument('--pop', type=int, default=64, metavar='N',
                     help='number of gene')
-parser.add_argument('--batch-size', type=int, default=16, metavar='N',
+parser.add_argument('--batch_size', type=int, default=16, metavar='N',
                     help='input batch size for training (default: 16)')
-parser.add_argument('--num-batch', type=int, default=50, metavar='N',
+parser.add_argument('--num_batch', type=int, default=50, metavar='N',
                     help='input batch number for each episode (default: 50)')
 parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.01)')
-parser.add_argument('--no-cuda', action='store_true', default=False,
+parser.add_argument('--no_cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
-parser.add_argument('--neuron-num', type=int, default=20, metavar='N',
+parser.add_argument('--neuron_num', type=int, default=20, metavar='N',
                     help='number of neuron in each module')
-parser.add_argument('--generation-limit', type=int, default=100, metavar='N',
+parser.add_argument('--generation_limit', type=int, default=100, metavar='N',
                     help='number of generation to compute')
-parser.add_argument('--noise-prob', type=float, default=0.5, metavar='N',
+parser.add_argument('--noise_prob', type=float, default=0.5, metavar='N',
                     help='salt and pepper noise rate')
 parser.add_argument('--threshold', type=float, default=0.998, metavar='N',
                     help='accuracy threshold to finish the first task')
-parser.add_argument('--readout-num', type=int, default=2, metavar='N',
+parser.add_argument('--readout_num', type=int, default=2, metavar='N',
                     help='number of units for readout (default: 2 for MNIST binary classification task)')
 parser.add_argument('--control', action='store_true', default=False,
                     help='controlled experiment on/off')
-parser.add_argument('--fine-tune', action='store_true', default=False,
+parser.add_argument('--fine_tune', action='store_true', default=False,
                     help='fine-tuning control experiment on/off')
-parser.add_argument('--no-graph', dest='vis', action='store_false', default=True,
+parser.add_argument('--no_graph', dest='vis', action='store_false', default=True,
                     help='show graph')
-parser.add_argument('--no-save', action='store_true', default=False,
+parser.add_argument('--no_save', action='store_true', default=False,
                     help='do not save result')
-parser.add_argument('--cifar-svhn', action='store_true', default=False,
+parser.add_argument('--cifar_svhn', action='store_true', default=False,
                     help='cifar-svhn task')
-parser.add_argument('--trainset-limit', type=int, default=20000, metavar='N',
+parser.add_argument('--trainset_limit', type=int, default=20000, metavar='N',
                     help='training dataset limitation for RAM')
-parser.add_argument('--testset-limit', type=int, default=1000, metavar='N',
+parser.add_argument('--testset_limit', type=int, default=1000, metavar='N',
                     help='test dataset limitation for RAM')
-parser.add_argument('--cifar-first', action='store_true', default=False,
+parser.add_argument('--cifar_first', action='store_true', default=False,
                     help='cifar trained first')
+parser.add_argument('--non_overlapping_transfer', action='store_true', default=False,
+                    help='require non-overlapping MNIST digit pairs (4 digits in total)')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
+
+if args.cuda:
+    print("Using GPU for PyTorch: {}".format(torch.cuda.get_device_name(torch.cuda.current_device())))
+else:
+    print("Using CPU for PyTorch")
 
 torch.manual_seed(args.seed)
 if args.cuda:
@@ -203,12 +210,23 @@ def main():
             '''
     #labels = random.sample(range(10), 2)
     if not args.cifar_svhn:
-        c_1 = labels[0]
+        if args.non_overlapping_transfer:
+            while True:
+                c_1 = random.randint(0, 10-1)
+                if c_1 != labels[0] and c_1 != labels[1]:
+                    break
+
+            while True:
+                c_2 = random.randint(0, 10-1)
+                if c_2 != labels[0] and c_2 != labels[1] and c_2 != c_1:
+                    break
+        else:
+            c_1 = labels[0]
         
-        while True:
-            c_2 = random.randint(0, 10-1)
-            if not c_2 == c_1:
-                break
+            while True:
+                c_2 = random.randint(0, 10-1)
+                if not c_2 == c_1:
+                    break
         labels = [c_1, c_2]
         print("Two training classes : {} and {}".format(labels[0], labels[1]))
         dataset.set_binary_class(labels[0], labels[1])

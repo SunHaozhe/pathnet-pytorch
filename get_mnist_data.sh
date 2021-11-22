@@ -8,8 +8,8 @@ fi
 
 wget --recursive --level=1 --cut-dirs=3 --no-host-directories \
      --directory-prefix=data/mnist --accept '*.gz' http://yann.lecun.com/exdb/mnist/
-pushd mnist
+#pushd mnist
 gzip -d data/mnist/*
-popd
+#popd
 
 

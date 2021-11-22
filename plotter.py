@@ -13,6 +13,8 @@ args = parser.parse_args()
 
 def subplot(subplot, data_first, data_second, title):
     plt.subplot(subplot)
+    plt.gcf().set_size_inches(10, 4)
+
     if args.mnist:
         x = np.arange(0,100)
     else:
@@ -40,10 +42,17 @@ def subplot(subplot, data_first, data_second, title):
     plt.xlabel('Generations',fontsize=15)
     plt.grid(True)
 
+    plt.tight_layout()
+
+
+
+my_imgs_dir = "my_imgs"
+if not os.path.exists(my_imgs_dir):
+    os.makedirs(my_imgs_dir)
 
 try: 
     if args.mnist:
-        f = open(os.path.join('./result/result_mnist.pickle'))
+        f = open(os.path.join('./result/result_mnist.pickle'), "rb")
         result = pickle.load(f)
         f.close()
         pathnet_first = []
@@ -54,11 +63,13 @@ try:
             pathnet_second.append(res[3])
 
         subplot('111', pathnet_first, pathnet_second,'MNIST')
+        
+        plt.gcf().savefig(os.path.join(my_imgs_dir, "MNIST_experiments_{}.png".format(len(result))), dpi=plt.gcf().dpi)
         plt.show()
 
 
     else:
-        f = open(os.path.join('./result/result_cifar_svhn.pickle'))
+        f = open(os.path.join('./result/result_cifar_svhn.pickle'), "rb")
         result = pickle.load(f)
         f.close()
 
@@ -75,10 +86,11 @@ try:
                 svhn_first.append(res[2])
                 cifar_second.append(res[3])
 
-    subplot('211', cifar_first, cifar_second,'CIFAR-10')
-    subplot('212', svhn_first, svhn_second,'cSVHN')
+        subplot('211', cifar_first, cifar_second,'CIFAR-10')
+        subplot('212', svhn_first, svhn_second,'cSVHN')
 
     plt.show()
 
-except IOError:
+except IOError as e:
+    print(e)
     print("Result file does not exist")
