@@ -85,7 +85,7 @@ class Net(nn.Module):
 
         if self.args.cuda:
             self.cuda()
-
+    
     def forward(self, x, path, final_layer_idx=-1):
         """
         path: 2D array of integers with size (L, N)
@@ -130,7 +130,7 @@ class Net(nn.Module):
 
             # max with dim returns a namedtuple (values, indices), 
             # where indices is the index location of each maximum value found (argmax)
-            pred = output.detach().max(dim=1)[1]  # get the index of the max log-probability
+            pred = output.max(dim=1)[1]  # get the index of the max log-probability
 
             # pred: <class 'torch.Tensor'> torch.Size([16]) torch.int64
             correct_cnt += pred.eq(target).cpu().sum()
@@ -140,7 +140,7 @@ class Net(nn.Module):
                 break
         train_accuracy = correct_cnt / train_len
         return train_accuracy
-    
+
     def test_model(self, test_loader, path, final_layer_idx):
         self.eval()
         correct_cnt = 0
