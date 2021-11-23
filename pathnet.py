@@ -16,67 +16,79 @@ class Net(nn.Module):
         self.M = args.M # number of modules in each layer
         self.N = args.N # number of active modules
         self.neuron_num = args.neuron_num # number of neuron in each module
-        self.final_layers = []
+        self.readout_num = args.readout_num
+        
         if args.cifar_svhn:
             self.input_size = 32 * 32 * 3
         else:
-            self.input_size = 28 * 28
-        self.init(None)
+            self.input_size = 28 * 28 # MNIST
 
-    def init(self, best_path):
-        if best_path is None:
-            best_path = [[None]] * self.L
-
-        neuron_num = self.neuron_num
-        module_num = [self.M] * self.L
-        #module_num = self.args.module_num
+        self.init_final_layers()
 
         """Initialize all parameters"""
         # each one stores one layer of modules, i.e. one layer of PathNet
         self.layers = nn.ModuleList()
         for l in range(self.L):
             self.layers.append(nn.ModuleList())
-        
+            for m in range(self.M):
+                self.layers[-1].append(None)
+
+        self.init(None)
+
+    def init(self, optimal_path):
+        """
+        If optimal_path is None, then initialize every modules, add a new final layer, 
+            backpropogate gradients to every module and the new final layer.
+
+        If optimal_path is not None:
+            modules that are not present in optimal_path will be reinitialized, modules 
+            present in optimal_path will not be touched. A new final layer will be added. 
+            Gradients will only be backpropogated to modules that are not in optimal_path. 
+
+
+        """
+        if optimal_path is None:
+            optimal_path = [[None]] * self.L
+
+        neuron_num = self.neuron_num
+        module_num = [self.M] * self.L
+
         # loop through L layers of PathNet
         for l in range(self.L):
             # loop through M modules (each module in PathNet)
-            for i in range(module_num[l]):  
+            for m in range(module_num[l]):  
                 # if this module is not in an optimal path (then its parameters can be reinitialized for transfer learning)
-                if i not in best_path[l]:  
-                    """All parameters should be declared as member variable: use nn.ModuleList()"""
+                if m not in optimal_path[l]:
                     if l == 0:
                         curr_module_input_size = self.input_size
                     else:
                         curr_module_input_size = neuron_num
                     # initialization or reinitialization
                     module_ = nn.Linear(curr_module_input_size, neuron_num)
-                self.layers[l].append(module_)
+                    self.layers[l][m] = module_
 
         """final layer which is not inclued in pathnet. Independent for each task"""
-        if len(self.final_layers) < 1:
-            self.final_layer1 = nn.Linear(neuron_num, self.args.readout_num)
-            self.final_layers.append(self.final_layer1)
-        else:
-            self.final_layer2 = nn.Linear(neuron_num, self.args.readout_num)
-            self.final_layers.append(self.final_layer2)
+        final_layer_ = nn.Linear(neuron_num, self.readout_num)
+        self.final_layers.append(final_layer_)
 
+        # select parameters to train (modules not in optimal path + the newest final layer)
         trainable_params = []
-        for path, layer_ in zip(best_path, self.layers):
-            for i, module_ in enumerate(layer_):
-                if i in path:
+        for modules_in_optimal_path_curr_layer, layer_ in zip(optimal_path, self.layers):
+            for module_idx, module_ in enumerate(layer_):
+                if module_idx in modules_in_optimal_path_curr_layer:
+                    # if module is in the optimal path, then do not backpropogate gradients to it
                     module_.requires_grad = False
                 else:
-                    p = {'params': module_.parameters()}
-                    trainable_params.append(p)
-                    
-        p = {'params': self.final_layers[-1].parameters()}
-        trainable_params.append(p)
+                    # if module is not in the optimal path, optimize it using gradient descent
+                    trainable_params.append({"params": module_.parameters()})
+        trainable_params.append({"params": self.final_layers[-1].parameters()})
+
         self.optimizer = optim.SGD(trainable_params, lr=self.args.lr)
 
         if self.args.cuda:
             self.cuda()
 
-    def forward(self, x, path, last):
+    def forward(self, x, path, final_layer_idx):
         x = x.view(-1, self.input_size)
 
         for l in range(self.L):
@@ -85,8 +97,11 @@ class Net(nn.Module):
                 y += F.relu(self.layers[l][path[l][j]](x))
             x = y
 
-        x = self.final_layers[last](x)
+        x = self.final_layers[final_layer_idx](x)
         return x
+
+    def init_final_layers(self):
+        self.final_layers = nn.ModuleList()
 
     def train_model(self, train_loader, path, num_batch):
         self.train()
