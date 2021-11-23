@@ -62,7 +62,7 @@ try:
             pathnet_first.append(res[2])
             pathnet_second.append(res[3])
 
-        subplot('111', pathnet_first, pathnet_second,'MNIST')
+        subplot(111, pathnet_first, pathnet_second,'MNIST')
         
         plt.gcf().savefig(os.path.join(my_imgs_dir, "MNIST_experiments_{}.png".format(len(result))), dpi=plt.gcf().dpi)
         plt.show()
