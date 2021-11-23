@@ -44,8 +44,6 @@ class Net(nn.Module):
             modules that are not present in optimal_path will be reinitialized, modules 
             present in optimal_path will not be touched. A new final layer will be added. 
             Gradients will only be backpropogated to modules that are not in optimal_path. 
-
-
         """
         if optimal_path is None:
             optimal_path = [[None]] * self.L
@@ -88,13 +86,18 @@ class Net(nn.Module):
         if self.args.cuda:
             self.cuda()
 
-    def forward(self, x, path, final_layer_idx):
+    def forward(self, x, path, final_layer_idx=-1):
+        """
+        path: 2D array of integers with size (L, N)
+        """
         x = x.view(-1, self.input_size)
 
         for l in range(self.L):
-            y = F.relu(self.layers[l][path[l][0]](x))
-            for j in range(1, self.N):
-                y += F.relu(self.layers[l][path[l][j]](x))
+            y = 0
+            for n in range(self.N):
+                module_idx = path[l][n]
+                module_ = self.layers[l][module_idx]
+                y += F.relu(module_(x))
             x = y
 
         x = self.final_layers[final_layer_idx](x)
@@ -104,42 +107,53 @@ class Net(nn.Module):
         self.final_layers = nn.ModuleList()
 
     def train_model(self, train_loader, path, num_batch):
+        """
+        path: 2D array of integers with size (L, N)
+        """
         self.train()
-        fitness = 0
+        correct_cnt = 0
         train_len = 0
         for batch_idx, (data, target) in enumerate(train_loader):
             if self.args.cuda:
                 data, target = data.cuda(), target.cuda()
-            data, target = Variable(data), Variable(target)
+            
             self.optimizer.zero_grad()
-            output = self.forward(data, path, -1)  # (chongyi zheng): update from '_call_impl' to 'forward' method
-            pred = output.max(dim=1)[1]  # get the index of the max log-probability
-            fitness += pred.eq(target).cpu().sum()
-            train_len += len(target)
-            # output: <class 'torch.Tensor'> torch.Size([16, 2]) torch.float32
-            # <class 'torch.Tensor'> torch.Size([16]) torch.int64
+
+            ## for binary MNIST experiments
+            # data:   <class 'torch.Tensor'> torch.Size([16, 784]) torch.float32
+            # target: <class 'torch.Tensor'> torch.Size([16])      torch.int64
+            # output: <class 'torch.Tensor'> torch.Size([16, 2])   torch.float32
+            output = self.forward(data, path, -1)  
             loss = F.cross_entropy(output, target)
             loss.backward()
             self.optimizer.step()
+
+            # max with dim returns a namedtuple (values, indices), 
+            # where indices is the index location of each maximum value found (argmax)
+            pred = output.detach().max(dim=1)[1]  # get the index of the max log-probability
+
+            # pred: <class 'torch.Tensor'> torch.Size([16]) torch.int64
+            correct_cnt += pred.eq(target).cpu().sum()
+            train_len += len(target)
+
             if not batch_idx < num_batch - 1:
                 break
-        fitness = fitness / train_len
-        return fitness
-
-    def test_model(self, test_loader, path, last):
+        train_accuracy = correct_cnt / train_len
+        return train_accuracy
+    
+    def test_model(self, test_loader, path, final_layer_idx):
         self.eval()
-        fitness = 0
-        train_len = 0
-        for batch_idx, (data, target) in enumerate(test_loader):
-            if self.args.cuda:
-                data, target = data.cuda(), target.cuda()
-            data, target = Variable(data), Variable(target)
-            self.optimizer.zero_grad()
-            output = self(data, path, last)
-            pred = output.data.max(1)[1]  # get the index of the max log-probability
-            fitness += pred.eq(target.data).cpu().sum()
-            train_len += len(target.data)
-            if batch_idx > 1000:
-                break
-        fitness = fitness / train_len
-        return fitness
+        correct_cnt = 0
+        test_len = 0
+        with torch.no_grad():
+            for batch_idx, (data, target) in enumerate(test_loader):
+                if self.args.cuda:
+                    data, target = data.cuda(), target.cuda()
+                output = self(data, path, final_layer_idx)
+                pred = output.max(dim=1)[1]  # get the index of the max log-probability
+                correct_cnt += pred.eq(target).cpu().sum()
+                test_len += len(target)
+                if batch_idx > 1000:
+                    break
+            test_accuracy = correct_cnt / test_len
+        return test_accuracy
