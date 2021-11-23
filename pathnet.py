@@ -17,36 +17,39 @@ class Net(nn.Module):
 
     def init(self, best_path):
         if best_path is None:
-            best_path = [[None] * self.args.M] * self.args.L
+            best_path = [[None]] * self.args.L
 
         neuron_num = self.args.neuron_num
         module_num = [self.args.M] * self.args.L
         #module_num = self.args.module_num
 
         """Initialize all parameters"""
-        self.fc1 = []
-        self.fc2 = []
-        self.fc3 = []
+        # each one stores one layer of modules, i.e. one layer of PathNet
+        self.fc1 = nn.ModuleList()
+        self.fc2 = nn.ModuleList()
+        self.fc3 = nn.ModuleList()
 
-        for i in range(module_num[0]):  # M
-            if not i in best_path[0]:  # M
+        # loop through M modules (each module in PathNet)
+        for i in range(module_num[0]):  
+            # if this module is not in an optimal path (then its parameters can be reinitialized for transfer learning)
+            if i not in best_path[0]:  
                 """All parameters should be declared as member variable, so I think this is the simplest way to do so"""
+                """A better solution: use nn.ModuleList()"""
                 if not self.args.cifar_svhn:
-                    exec("self.m1" + str(i) + " = nn.Linear(28*28," + str(neuron_num) + ")")
+                    intput_layer = nn.Linear(28*28, neuron_num)
                 else:
-                    exec("self.m1" + str(i) + " = nn.Linear(32*32*3," + str(neuron_num) + ")")
-            exec("self.fc1.append(self.m1" + str(i) + ")")
+                    intput_layer = nn.Linear(32*32*3, neuron_num)
+            self.fc1.append(intput_layer)
 
         for i in range(module_num[1]):
-            if not i in best_path[1]:
-                exec("self.m2" + str(i) + " = nn.Linear(" + str(neuron_num) + "," + str(neuron_num) + ")")
-            exec("self.fc2.append(self.m2" + str(i) + ")")
+            if i not in best_path[1]:
+                layer1 = nn.Linear(neuron_num, neuron_num)
+            self.fc2.append(layer1)
 
         for i in range(module_num[2]):
-            if not i in best_path[2]:
-                #exec("self.m3" + str(i) + " = nn.Linear(" + str(neuron_num) + ", 10)")
-                exec("self.m3" + str(i) + " = nn.Linear(" + str(neuron_num) + "," + str(neuron_num) + ")")
-            exec("self.fc3.append(self.m3" + str(i) + ")")
+            if i not in best_path[2]:
+                layer2 = nn.Linear(neuron_num, neuron_num)
+            self.fc3.append(layer2)
 
         """final layer which is not inclued in pathnet. Independent for each task"""
         if len(self.final_layers) < 1:
